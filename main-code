@@ -1,4 +1,5 @@
 import random
+import time
 
 class PacmanGame:
     def __init__(self, rows, cols, obstacles, pacman_house, soul_houses):
@@ -84,16 +85,20 @@ class PacmanGame:
                     break
             return best_score
 
-    def pacman_move_minimax(self, depth):
+    def pacman_move_minimax(self, max_depth, time_limit):
         best_score = float('-inf')
         best_move = None
+        start_time = time.time()
 
-        for move in self.get_possible_moves(self.pacman_position):
-            new_board = self.simulate_move(self.pacman_position, move)
-            score = self.minimax_alpha_beta(new_board, depth - 1, float('-inf'), float('inf'), False)
+        depth = 1
+        while time.time() - start_time < time_limit:
+            move, score = self.minimax_alpha_beta(self.game_board, depth, float('-inf'), float('inf'), False)
             if score > best_score:
                 best_score = score
                 best_move = move
+            depth += 1
+            if depth > max_depth:
+                break
 
         return best_move
 
