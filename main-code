@@ -1,0 +1,160 @@
+class PacmanGame:
+    def __init__(self, rows, cols, obstacles, pacman_house, soul_houses):
+        self.num_rows = rows
+        self.num_cols = cols
+        self.obstacles = obstacles
+        self.pacman_house = pacman_house
+        self.soul_houses = soul_houses
+        self.game_board = self.initialize_game_board()
+        self.score = 0
+        self.pacman_position = pacman_house
+        self.souls_positions = soul_houses
+        self.move_score = -1
+        self.point_score = 10
+
+    def initialize_game_board(self):
+        game_board = [['.' for _ in range(self.num_cols)] for _ in range(self.num_rows)]
+        for row, col in self.obstacles:
+            game_board[row][col] = '#'
+        game_board[self.pacman_house[0]][self.pacman_house[1]] = 'P'
+        for row, col in self.soul_houses:
+            game_board[row][col] = 'S'
+        return game_board
+
+    def display_game_board(self):
+        for row in self.game_board:
+            print(' '.join(row))
+        print("Score: ", self.score)
+
+    def calculate_score(self):
+        return self.score
+
+    def is_game_over(self):
+        if self.score == self.num_rows * self.point_score:
+            return True  # Pac-Man wins
+        elif self.pacman_position in self.souls_positions:
+            return True  # Pac-Man loses
+        else:
+            return False
+
+    def get_possible_moves(self, position):
+        possible_moves = []
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
+        for direction in directions:
+            new_row = position[0] + direction[0]
+            new_col = position[1] + direction[1]
+            if 0 <= new_row < self.num_rows and 0 <= new_col < self.num_cols:
+                if self.game_board[new_row][new_col] != '#':
+                    possible_moves.append((new_row, new_col))
+        return possible_moves
+
+    def simulate_move(self, position, move):
+        new_board = [row[:] for row in self.game_board]
+        new_board[position[0]][position[1]] = '.'
+        new_board[move[0]][move[1]] = 'P'
+        return new_board
+
+    def minimax_alpha_beta(self, board, depth, alpha, beta, maximizing_player):
+        if depth == 0 or self.is_game_over():
+            return self.calculate_score()
+
+        if maximizing_player:
+            best_score = float('-inf')
+            for move in self.get_possible_moves(self.pacman_position):
+                new_board = self.simulate_move(self.pacman_position, move)
+                score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, False)
+                best_score = max(best_score, score)
+                alpha = max(alpha, best_score)
+                if beta <= alpha:
+                    break
+            return best_score
+        else:
+            best_score = float('inf')
+            for i, soul_position in enumerate(self.souls_positions):
+                for move in self.get_possible_moves(soul_position):
+                    new_board = self.simulate_move(soul_position, move)
+                    score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, True)
+                    best_score = min(best_score, score)
+                    beta = min(beta, best_score)
+                    if beta <= alpha:
+                        break
+                if beta <= alpha:
+                    break
+            return best_score
+
+    def pacman_move_minimax(self, depth):
+        best_score = float('-inf')
+        best_move = None
+
+        for move in self.get_possible_moves(self.pacman_position):
+            new_board = self.simulate_move(self.pacman_position, move)
+            score = self.minimax_alpha_beta(new_board, depth - 1, float('-inf'), float('inf'), False)
+            if score > best_score:
+                best_score = score
+                best_move = move
+
+        return best_move
+
+    def make_move(self, move, soul=False):
+        if soul:
+            self.souls_positions.remove(move)
+        else:
+            self.pacman_position = move
+            if move in self.soul_houses:
+                self.score += self.point_score
+                self.souls_positions.remove(move)
+            elif self.game_board[move[0]][move[1]] == '.':
+                self.score += self.move_score
+        self.game_board[move[0]][move[1]] = 'P'
+
+    def undo_move(self, move, soul=False):
+        if soul:
+            self.souls_positions.append(move)
+        else:
+            self.pacman_position = move
+            if...move in self.soul_houses:
+                self.score -= self.point_score
+                self.souls_positions.append(move)
+            elif self.game_board[move[0]][move[1]] == '.':
+                self.score -= self.move_score
+        self.game_board[move[0]][move[1]] = '.'
+
+    def play_game(self, depth):
+        while not self.is_game_over():
+            self.display_game_board()
+            best_move = self.pacman_move_minimax(depth)
+            self.make_move(best_move)
+        self.display_game_board()
+        if self.score == self.num_rows * self.point_score:
+            print("Pac-Man wins!")
+        else:
+            print("Pac-Man loses!")
+
+
+def generate_random_positions(num_positions, exclude_positions):
+    positions = set()
+    while len(positions) < num_positions:
+        position = (
+            random.randint(0, rows - 1),
+            random.randint(0, cols - 1)
+        )
+        if position not in exclude_positions:
+            positions.add(position)
+    return list(positions)
+
+def generate_random_parameters():
+    rows = 9
+    cols = 18
+    num_obstacles = random.randint(1, min(rows, cols) - 1)
+    obstacles = generate_random_positions(num_obstacles, [])
+    pacman_house = random.choice(obstacles)
+    soul_houses = generate_random_positions(num_obstacles, [pacman_house])
+    return rows, cols, obstacles, pacman_house, soul_houses
+
+def main():
+    rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters()
+    game = PacmanGame(rows, cols, obstacles, pacman_house, soul_houses)
+    game.play_game(depth=3)
+
+if __name__ == '__main__':
+    main()
