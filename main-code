@@ -1,3 +1,5 @@
+import random
+
 class PacmanGame:
     def __init__(self, rows, cols, obstacles, pacman_house, soul_houses):
         self.num_rows = rows
@@ -131,7 +133,7 @@ class PacmanGame:
             print("Pac-Man loses!")
 
 
-def generate_random_positions(num_positions, exclude_positions):
+def generate_random_positions(num_positions, exclude_positions, rows, cols):
     positions = set()
     while len(positions) < num_positions:
         position = (
@@ -142,17 +144,17 @@ def generate_random_positions(num_positions, exclude_positions):
             positions.add(position)
     return list(positions)
 
-def generate_random_parameters():
-    rows = 9
-    cols = 18
+def generate_random_parameters(rows, cols):
     num_obstacles = random.randint(1, min(rows, cols) - 1)
-    obstacles = generate_random_positions(num_obstacles, [])
+    obstacles = generate_random_positions(num_obstacles, [], rows, cols)
     pacman_house = random.choice(obstacles)
-    soul_houses = generate_random_positions(num_obstacles, [pacman_house])
+    soul_houses = generate_random_positions(num_obstacles, [pacman_house], rows, cols)
     return rows, cols, obstacles, pacman_house, soul_houses
 
 def main():
-    rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters()
+    rows = 9
+    cols = 18
+    rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters(rows, cols)
     game = PacmanGame(rows, cols, obstacles, pacman_house, soul_houses)
     game.play_game(depth=3)
 
