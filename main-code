@@ -14,6 +14,8 @@ class PacmanGame:
         self.souls_positions = soul_houses
         self.move_score = -1
         self.point_score = 10
+        self.moves = []
+        self.scores = []
 
     def initialize_game_board(self):
         game_board = [['.' for _ in range(self.num_cols)] for _ in range(self.num_rows)]
@@ -40,16 +42,25 @@ class PacmanGame:
         else:
             return False
 
-    def get_possible_moves(self, position):
+    def get_possible_moves(self, position, soul=False):
         possible_moves = []
         directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
         for direction in directions:
             new_row = position[0] + direction[0]
             new_col = position[1] + direction[1]
             if 0 <= new_row < self.num_rows and 0 <= new_col < self.num_cols:
-                if self.game_board[new_row][new_col] != '#':
+                if not soul and self.game_board[new_row][new_col] != '#':
+                    possible_moves.append((new_row, new_col))
+                elif soul and self.game_board[new_row][new_col] == '.':
                     possible_moves.append((new_row, new_col))
         return possible_moves
+
+    def souls_move_randomly(self):
+        for i, soul_position in enumerate(self.souls_positions):
+            possible_moves = self.get_possible_moves(soul_position, soul=True)
+            if possible_moves:
+                new_position = random.choice(possible_moves)
+                self.souls_positions[i] = new_position
 
     def simulate_move(self, position, move):
         new_board = [row[:] for row in self.game_board]
@@ -97,7 +108,7 @@ class PacmanGame:
                 best_score = score
                 best_move = move
             depth += 1
-            if depth > max_depth:
+            if depth > max_depth or time.time() - start_time > time_limit:
                 break
 
         return best_move
@@ -113,29 +124,36 @@ class PacmanGame:
             elif self.game_board[move[0]][move[1]] == '.':
                 self.score += self.move_score
         self.game_board[move[0]][move[1]] = 'P'
+        self.moves.append(move)
+        self.scores.append(self.score)
 
     def undo_move(self, move, soul=False):
         if soul:
             self.souls_positions.append(move)
         else:
             self.pacman_position = move
-            if...move in self.soul_houses:
+            if move in self.soul_houses:
                 self.score -= self.point_score
                 self.souls_positions.append(move)
             elif self.game_board[move[0]][move[1]] == '.':
                 self.score -= self.move_score
         self.game_board[move[0]][move[1]] = '.'
+        self.moves.pop()
+        self.scores.pop()
 
     def play_game(self, depth):
         while not self.is_game_over():
             self.display_game_board()
             best_move = self.pacman_move_minimax(depth)
             self.make_move(best_move)
+            self.souls_move_randomly()
         self.display_game_board()
         if self.score == self.num_rows * self.point_score:
             print("Pac-Man wins!")
         else:
             print("Pac-Man loses!")
+        print("Moves:", self.moves)
+        print("Scores:", self.scores)
 
 
 def generate_random_positions(num_positions, exclude_positions, rows, cols):
@@ -161,7 +179,7 @@ def main():
     cols = 18
     rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters(rows, cols)
     game = PacmanGame(rows, cols, obstacles, pacman_house, soul_houses)
-    game.play_game(depth=3)
+    game.play_game(max_depth=5, time_limit=10)
 
 if __name__ == '__main__':
     main()
