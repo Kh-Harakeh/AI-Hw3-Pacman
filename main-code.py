@@ -17,15 +17,17 @@ class PacmanGame:
         self.moves = 0
         self.scores = []
         self.point_score = 1
-        self.souls_positions = []  # Add the souls_positions attribute
+        self.souls_positions = []
+        self.game_board = []  # Add the game_board attribute
 
     def initialize_game_board(self):
         game_board = [['.' for _ in range(self.num_cols)] for _ in range(self.num_rows)]
-        for row, col in self.obstacles:
-            game_board[row][col] = '#'
+        for obstacle in self.obstacles:
+            game_board[obstacle[0]][obstacle[1]] = 'X'
         game_board[self.pacman_house[0]][self.pacman_house[1]] = 'P'
         for point in self.points:
             game_board[point.position[0]][point.position[1]] = 'S'
+        self.game_board = game_board  # Update the game_board attribute
         return game_board
 
     def display_game_board(self):
