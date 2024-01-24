@@ -7,17 +7,17 @@ class Point:
         self.value = value
 
 class PacmanGame:
-    def __init__(self, rows, cols, obstacles, pacman_house, points):
-        self.num_rows = rows
-        self.num_cols = cols
+    def __init__(self, num_rows, num_cols, obstacles, pacman_house, points):
+        self.num_rows = num_rows
+        self.num_cols = num_cols
         self.obstacles = obstacles
         self.pacman_house = pacman_house
         self.points = points
-        self.game_board = self.initialize_game_board()
         self.score = 0
-        self.pacman_position = pacman_house
-        self.moves = []
+        self.moves = 0
         self.scores = []
+        self.point_score = 1
+        self.souls_positions = []  # Add the souls_positions attribute
 
     def initialize_game_board(self):
         game_board = [['.' for _ in range(self.num_cols)] for _ in range(self.num_rows)]
@@ -64,11 +64,12 @@ class PacmanGame:
         return possible_moves
 
     def souls_move_randomly(self):
-        for i, soul_position in enumerate(self.souls_positions):
-            possible_moves = self.get_possible_moves(soul_position, soul=True)
-            if possible_moves:
-                new_position = random.choice(possible_moves)
-                self.souls_positions[i] = new_position
+        new_souls_positions = []
+        for soul_position in self.souls_positions:
+            possible_moves = self.get_possible_moves(soul_position)
+            new_position = random.choice(possible_moves)
+            new_souls_positions.append(new_position)
+        self.souls_positions = new_souls_positions
 
     def simulate_move(self, position, move):
         new_board = [row[:] for row in self.game_board]
@@ -121,19 +122,16 @@ class PacmanGame:
 
         return best_move
 
-    def make_move(self, move, soul=False):
-        if soul:
-            self.souls_positions.remove(move)
-        else:
-            self.pacman_position = move
-            if move in self.soul_houses:
-                self.score += self.point_score
-                self.souls_positions.remove(move)
-            elif self.game_board[move[0]][move[1]] == '.':
-                self.score += self.move_score
-        self.game_board[move[0]][move[1]] = 'P'
-        self.moves.append(move)
-        self.scores.append(self.score)
+    def make_move(self, move):
+        self.moves += 1
+        if move == 'U':
+            self.pacman_position = (self.pacman_position[0] - 1, self.pacman_position[1])
+        elif move == 'D':
+            self.pacman_position = (self.pacman_position[0] + 1, self.pacman_position[1])
+        elif move == 'L':
+            self.pacman_position = (self.pacman_position[0], self.pacman_position[1] - 1)
+        elif move == 'R':
+            self.pacman_position = (self.pacman_position[0], self.pacman_position[1] + 1)
 
     def undo_move(self, move, soul=False):
         if soul:
