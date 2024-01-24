@@ -32,13 +32,13 @@ class PacmanGame:
         print("Score: ", self.score)
 
     def calculate_score(self):
-        return self.score
+        return len(self.souls_positions)  # Count the number of remaining points
 
     def is_game_over(self):
-        if self.score == self.num_rows * self.point_score:
-            return True  # Pac-Man wins
+        if len(self.souls_positions) == 0:
+            return True  # Pac-Man wins if all points are collected
         elif self.pacman_position in self.souls_positions:
-            return True  # Pac-Man loses
+            return True  # Pac-Man loses if he collides with a soul
         else:
             return False
 
