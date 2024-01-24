@@ -186,7 +186,9 @@ def main():
     rows = 9
     cols = 18
     rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters(rows, cols)
-    game = PacmanGame(rows, cols, obstacles, pacman_house, soul_houses)
+    # Create Point objects for each soul position
+    points = [Point(position, 0) for position in soul_houses]
+    game = PacmanGame(rows, cols, obstacles, pacman_house, points)
     game.play_game(max_depth=5, time_limit=10)
 
 if __name__ == '__main__':
