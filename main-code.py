@@ -149,12 +149,18 @@ class PacmanGame:
         self.moves.pop()
         self.scores.pop()
 
-    def play_game(self, depth):
+    def play_game(self, depth, time_limit):
+        start_time = time.time()
         while not self.is_game_over():
             self.display_game_board()
-            best_move = self.pacman_move_minimax(depth)
+            best_move = self.pacman_move_minimax(depth, time_limit)
             self.make_move(best_move)
             self.souls_move_randomly()
+
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= time_limit:
+                break
+
         self.display_game_board()
         if self.score == self.num_rows * self.point_score:
             print("Pac-Man wins!")
