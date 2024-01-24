@@ -1,19 +1,21 @@
 import random
 import time
 
+class Point:
+    def __init__(self, position, value):
+        self.position = position
+        self.value = value
+
 class PacmanGame:
-    def __init__(self, rows, cols, obstacles, pacman_house, soul_houses):
+    def __init__(self, rows, cols, obstacles, pacman_house, points):
         self.num_rows = rows
         self.num_cols = cols
         self.obstacles = obstacles
         self.pacman_house = pacman_house
-        self.soul_houses = soul_houses
+        self.points = points
         self.game_board = self.initialize_game_board()
         self.score = 0
         self.pacman_position = pacman_house
-        self.souls_positions = soul_houses
-        self.move_score = -1
-        self.point_score = 10
         self.moves = []
         self.scores = []
 
@@ -22,8 +24,8 @@ class PacmanGame:
         for row, col in self.obstacles:
             game_board[row][col] = '#'
         game_board[self.pacman_house[0]][self.pacman_house[1]] = 'P'
-        for row, col in self.soul_houses:
-            game_board[row][col] = 'S'
+        for point in self.points:
+            game_board[point.position[0]][point.position[1]] = 'S'
         return game_board
 
     def display_game_board(self):
@@ -32,15 +34,21 @@ class PacmanGame:
         print("Score: ", self.score)
 
     def calculate_score(self):
-        return len(self.souls_positions)  # Count the number of remaining points
+        return self.score  # Count the number of remaining points
 
     def is_game_over(self):
-        if len(self.souls_positions) == 0:
+        if self.score == len(self.points):
             return True  # Pac-Man wins if all points are collected
-        elif self.pacman_position in self.souls_positions:
+        elif self.is_pacman_colliding_with_soul():
             return True  # Pac-Man loses if he collides with a soul
         else:
             return False
+
+    def is_pacman_colliding_with_soul(self):
+        for soul_position in self.souls_positions:
+            if self.pacman_position == soul_position:
+                return True
+        return False
 
     def get_possible_moves(self, position, soul=False):
         possible_moves = []
