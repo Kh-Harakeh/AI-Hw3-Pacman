@@ -8,40 +8,45 @@ class Point:
 
 class PacmanGame:
     def __init__(self, num_rows, num_cols, obstacles, pacman_house, points):
+        self.moves = 0  # Initialize moves attribute to 0
+        self.scores = []  # Initialize scores attribute as an empty list
         self.num_rows = num_rows
         self.num_cols = num_cols
         self.obstacles = obstacles
         self.pacman_house = pacman_house
         self.points = points
+        self.game_board = [['.'] * num_cols for _ in range(num_rows)]
         self.score = 0
-        self.moves = 0
-        self.scores = []
         self.point_score = 1
         self.souls_positions = []
-        self.game_board = self.initialize_game_board()  # Initialize game_board attribute
+
+    def display_game_board(self):
+        for row in self.game_board:
+            print(' '.join(row))
+        print("Score:", self.score)
 
     def initialize_game_board(self):
         game_board = [['.' for _ in range(self.num_cols)] for _ in range(self.num_rows)]
-        for obstacle in self.obstacles:
-            game_board[obstacle[0]][obstacle[1]] = 'X'
+        for row, col in self.obstacles:
+            game_board[row][col] = '#'
         game_board[self.pacman_house[0]][self.pacman_house[1]] = 'P'
         for point in self.points:
             game_board[point.position[0]][point.position[1]] = 'S'
         return game_board
 
-    def display_game_board(self):
-        for row in self.game_board:
-            print(' '.join(row))
-        print("Score: ", self.score)
-
-    def calculate_score(self):
-        return self.score  # Count the number of remaining points
+    def calculate_score(self, board):
+        score = 0
+        for row in board:
+            for cell in row:
+                if cell == 'S':
+                    score += self.point_score
+        return score
 
     def is_game_over(self):
         if self.score == len(self.points):
-            return True  # Pac-Man wins if all points are collected
+            return True
         elif self.is_pacman_colliding_with_soul():
-            return True  # Pac-Man loses if he collides with a soul
+            return True
         else:
             return False
 
@@ -53,7 +58,7 @@ class PacmanGame:
 
     def get_possible_moves(self, position, soul=False):
         possible_moves = []
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # Up, Down, Left, Right
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
         for direction in directions:
             new_row = position[0] + direction[0]
             new_col = position[1] + direction[1]
@@ -80,31 +85,37 @@ class PacmanGame:
 
     def minimax_alpha_beta(self, board, depth, alpha, beta, maximizing_player):
         if depth == 0 or self.is_game_over():
-            return self.calculate_score()
+            return None, self.calculate_score(board)  # Return None for best_move
 
         if maximizing_player:
             best_score = float('-inf')
+            best_move = None  # Initialize best_move variable       
             for move in self.get_possible_moves(self.pacman_position):
                 new_board = self.simulate_move(self.pacman_position, move)
-                score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, False)
-                best_score = max(best_score, score)
+                _, score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, False)
+                score = self.calculate_score(new_board)
+                if score > best_score:
+                    best_score = score
+                    best_move = move
                 alpha = max(alpha, best_score)
                 if beta <= alpha:
                     break
-            return best_score
+            return best_move, best_score  # Return a tuple of (move, score)
         else:
             best_score = float('inf')
             for i, soul_position in enumerate(self.souls_positions):
                 for move in self.get_possible_moves(soul_position):
                     new_board = self.simulate_move(soul_position, move)
-                    score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, True)
-                    best_score = min(best_score, score)
+                    _, score = self.minimax_alpha_beta(new_board, depth - 1, alpha, beta, True)
+                    score = self.calculate_score(new_board)
+                    if score < best_score:
+                        best_score = score
                     beta = min(beta, best_score)
                     if beta <= alpha:
                         break
                 if beta <= alpha:
                     break
-            return best_score
+            return None, best_score  # Return a tuple of (move, score)
 
     def pacman_move_minimax(self, max_depth, time_limit):
         best_score = float('-inf')
@@ -121,10 +132,10 @@ class PacmanGame:
             if depth > max_depth or time.time() - start_time > time_limit:
                 break
 
-        return best_move
+        return best_move, best_score
 
     def make_move(self, move):
-        self.moves += 1
+        self.moves += 1  # Increment moves attribute by 1
         if move == 'U':
             self.pacman_position = (self.pacman_position[0] - 1, self.pacman_position[1])
         elif move == 'D':
@@ -148,11 +159,14 @@ class PacmanGame:
         self.moves.pop()
         self.scores.pop()
 
+    def update_score(self, score):
+        self.scores.append(score)  # Add the score to the scores list
+
     def play_game(self, depth, time_limit):
         start_time = time.time()
         while not self.is_game_over():
             self.display_game_board()
-            best_move = self.pacman_move_minimax(depth, time_limit)
+            best_move, best_score = self.pacman_move_minimax(depth, time_limit)
             self.make_move(best_move)
             self.souls_move_randomly()
 
@@ -168,33 +182,41 @@ class PacmanGame:
         print("Moves:", self.moves)
         print("Scores:", self.scores)
 
+        # Print the best move and score
+        print("Best Move:", best_move)
+        print("Best Score:", best_score)
 
-def generate_random_positions(num_positions, exclude_positions, rows, cols):
-    positions = set()
-    while len(positions) < num_positions:
-        position = (
-            random.randint(0, rows - 1),
-            random.randint(0, cols - 1)
-        )
-        if position not in exclude_positions:
-            positions.add(position)
-    return list(positions)
+    @staticmethod
+    def generate_random_positions(num_positions, exclude_positions, rows, cols):
+        positions = set()
+        while len(positions) < num_positions:
+            position = (
+                random.randint(0, rows - 1),
+                random.randint(0, cols - 1)
+            )
+            if position not in exclude_positions:
+                positions.add(position)
+        return list(positions)
 
-def generate_random_parameters(rows, cols):
-    num_obstacles = random.randint(1, min(rows, cols) - 1)
-    obstacles = generate_random_positions(num_obstacles, [], rows, cols)
-    pacman_house = random.choice(obstacles)
-    soul_houses = generate_random_positions(num_obstacles, [pacman_house], rows, cols)
-    return rows, cols, obstacles, pacman_house, soul_houses
-
+    @staticmethod
+    def generate_random_parameters(rows, cols):
+        num_obstacles = random.randint(1, min(rows, cols) - 1)
+        obstacles = PacmanGame.generate_random_positions(num_obstacles, [], rows, cols)
+        pacman_house = random.choice(obstacles)
+        soul_houses = PacmanGame.generate_random_positions(num_obstacles, [pacman_house], rows, cols)
+        return rows, cols, obstacles, pacman_house, soul_houses
+        
 def main():
-    rows = 9
-    cols = 18
-    rows, cols, obstacles, pacman_house, soul_houses = generate_random_parameters(rows, cols)
-    # Create Point objects for each soul position
-    points = [Point(position, 0) for position in soul_houses]
-    game = PacmanGame(rows, cols, obstacles, pacman_house, points)
-    game.play_game(depth=5, time_limit=10)
+    num_rows = 9
+    num_cols = 18
+    obstacles = [(1, 1), (2, 2)]
+    pacman_house = (5, 0)
+    points = [Point((1, 2), 'S'), Point((3, 3), 'S')]
+    depth = 3  # Specify the depth for the minimax algorithm
+    time_limit = 3  # Specify the time limit
+
+    game = PacmanGame(num_rows, num_cols, obstacles, pacman_house, points)
+    game.play_game(depth, time_limit)
 
 if __name__ == '__main__':
     main()
