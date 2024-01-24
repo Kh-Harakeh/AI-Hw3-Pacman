@@ -195,7 +195,7 @@ def main():
     # Create Point objects for each soul position
     points = [Point(position, 0) for position in soul_houses]
     game = PacmanGame(rows, cols, obstacles, pacman_house, points)
-    game.play_game(max_depth=5, time_limit=10)
+    game.play_game(depth=5, time_limit=10)
 
 if __name__ == '__main__':
     main()
